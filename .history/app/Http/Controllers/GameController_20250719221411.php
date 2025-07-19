@@ -142,7 +142,7 @@ class GameController extends Controller
         $match = MatchModel::findOrFail($id);
         $validated = $request->validate([
             'match_name'     => 'required|string|max:255',
-            'category_id'    => 'required',
+            'category'       => 'required|string',
             'max_player'     => 'required|integer',
             'map_name'       => 'required|string',
             'version'        => 'required|string',

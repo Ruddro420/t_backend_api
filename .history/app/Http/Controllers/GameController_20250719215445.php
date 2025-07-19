@@ -22,8 +22,7 @@ class GameController extends Controller
     {
         $request->validate([
             'category_name' => 'required|string|max:255',
-            'category_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'rules' => 'required|string'
+            'category_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         if ($request->hasFile('category_image')) {
@@ -36,8 +35,7 @@ class GameController extends Controller
 
         $category = Category::create([
             'name' => $request->category_name,
-            'image' => $imagePath,
-            'rules' => $request->rules,
+            'image' => $imagePath
         ]);
 
         return response()->json($category, 201);
@@ -142,7 +140,7 @@ class GameController extends Controller
         $match = MatchModel::findOrFail($id);
         $validated = $request->validate([
             'match_name'     => 'required|string|max:255',
-            'category_id'    => 'required',
+            'category'       => 'required|string',
             'max_player'     => 'required|integer',
             'map_name'       => 'required|string',
             'version'        => 'required|string',

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('image')->nullable();
-            $table->longText('rules')->nullable();
+            $table->string('rules')->nullable();
             // adding nullable extra 2 fileds
             $table->string('ex1')->nullable();
             $table->string('ex2')->nullable();

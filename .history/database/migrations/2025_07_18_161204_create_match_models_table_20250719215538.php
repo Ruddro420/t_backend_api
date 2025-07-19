@@ -31,7 +31,7 @@ return new class extends Migration
             $table->string('fourth_prize')->nullable();
             $table->string('fifth_prize')->nullable();
             $table->string('total_prize')->nullable();
-            $table->string('status')->default(1);
+            $table->string('status')->default(0);
             $table->string('ex1')->nullable();
             $table->string('ex2')->nullable();
             $table->timestamps();

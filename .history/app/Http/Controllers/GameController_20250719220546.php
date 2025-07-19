@@ -23,7 +23,7 @@ class GameController extends Controller
         $request->validate([
             'category_name' => 'required|string|max:255',
             'category_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'rules' => 'required|string'
+            'rules' => 'required|string|max:5000'
         ]);
 
         if ($request->hasFile('category_image')) {
@@ -142,7 +142,7 @@ class GameController extends Controller
         $match = MatchModel::findOrFail($id);
         $validated = $request->validate([
             'match_name'     => 'required|string|max:255',
-            'category_id'    => 'required',
+            'category'       => 'required|string',
             'max_player'     => 'required|integer',
             'map_name'       => 'required|string',
             'version'        => 'required|string',
