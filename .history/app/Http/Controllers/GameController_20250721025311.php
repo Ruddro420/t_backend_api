@@ -284,7 +284,7 @@ class GameController extends Controller
     }
     // add game join store
 
-    public function storeGame(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'user_id'      => 'required',
@@ -293,11 +293,11 @@ class GameController extends Controller
             'entry_fee'    => 'nullable',
             'game_date'    => 'nullable',
             'game_time'    => 'nullable',
-            'win_prize'    => 'nullable',
-            'status'       => 'nullable|max:50',
-            'pname1'       => 'nullable',
-            'pname2'       => 'nullable',
-            'game_name'    => 'nullable',
+            'win_prize'    => 'nullable|numeric',
+            'status'       => 'nullable|string|max:50',
+            'pname1'       => 'nullable|string',
+            'pname2'       => 'nullable|string',
+            'game_name'    => 'nullable|string',
             'pay' => 'nullable',
         ]);
 

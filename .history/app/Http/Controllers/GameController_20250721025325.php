@@ -284,7 +284,7 @@ class GameController extends Controller
     }
     // add game join store
 
-    public function storeGame(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'user_id'      => 'required',

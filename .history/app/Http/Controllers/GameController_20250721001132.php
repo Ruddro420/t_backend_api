@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JoinModel;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Deposite;
@@ -263,7 +262,7 @@ class GameController extends Controller
         // ]);
 
         $deposite->status = $status;
-        $deposite->save();
+         $deposite->save();
 
         return response()->json([
             'message' => 'Deposite updated successfully',
@@ -281,31 +280,5 @@ class GameController extends Controller
             'total_deposit' => $totalAmount,
             'deposits' => $deposits
         ]);
-    }
-    // add game join store
-
-    public function storeGame(Request $request)
-    {
-        $validated = $request->validate([
-            'user_id'      => 'required',
-            'match_id'     => 'required|max:10',
-            'game_type'    => 'required',
-            'entry_fee'    => 'nullable',
-            'game_date'    => 'nullable',
-            'game_time'    => 'nullable',
-            'win_prize'    => 'nullable',
-            'status'       => 'nullable|max:50',
-            'pname1'       => 'nullable',
-            'pname2'       => 'nullable',
-            'game_name'    => 'nullable',
-            'pay' => 'nullable',
-        ]);
-
-        $gameEntry = JoinModel::create($validated);
-
-        return response()->json([
-            'message' => 'Game entry created successfully',
-            'data' => $gameEntry
-        ], 201);
     }
 }

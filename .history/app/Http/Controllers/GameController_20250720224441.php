@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JoinModel;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Deposite;
@@ -230,14 +229,17 @@ class GameController extends Controller
         return response()->json(['message' => 'Room deleted successfully']);
     }
     // store deposite
-    public function storeDeposite(Request $request)
+     public function storeDeposite(Request $request)
     {
         $request->validate([
-            'user_id' => 'required',
+            'user_id' => 'required|exists:users,id',
             'payment_method' => 'required|string|max:255',
             'payment_phone_number' => 'required|string|max:20',
             'transaction_id' => 'required|string|max:255|unique:deposites,transaction_id',
-            'amount' => 'required|string|min:0',
+            'amount' => 'required|numeric|min:0',
+            'status' => 'required|string|max:50',
+            'ex1' => 'nullable|string|max:255',
+            'ex2' => 'nullable|string|max:255',
         ]);
 
         $payment = Deposite::create($request->all());
@@ -245,67 +247,6 @@ class GameController extends Controller
         return response()->json([
             'message' => 'Payment recorded successfully',
             'payment' => $payment,
-        ], 201);
-    }
-    // get all deposites
-    public function getDeposit()
-    {
-        $deposits = Deposite::all();
-        return response()->json($deposits);
-    }
-    // update deposite
-    public function updateDeposite(Request $request, $id, $status)
-    {
-        $deposite = Deposite::findOrFail($id);
-
-        // $request->validate([
-        //     'status' => 'required|max:50',
-        // ]);
-
-        $deposite->status = $status;
-        $deposite->save();
-
-        return response()->json([
-            'message' => 'Deposite updated successfully',
-            'deposite' => $deposite,
-        ]);
-    }
-    // need deposite amount sum by same user_id where status is 1
-    public function getDepositByUserId($userId)
-    {
-        $deposits = Deposite::where('user_id', $userId)->where('status', 1)->get();
-        $totalAmount = $deposits->sum('amount');
-
-        return response()->json([
-            'user_id' => $userId,
-            'total_deposit' => $totalAmount,
-            'deposits' => $deposits
-        ]);
-    }
-    // add game join store
-
-    public function storeGame(Request $request)
-    {
-        $validated = $request->validate([
-            'user_id'      => 'required',
-            'match_id'     => 'required|max:10',
-            'game_type'    => 'required',
-            'entry_fee'    => 'nullable',
-            'game_date'    => 'nullable',
-            'game_time'    => 'nullable',
-            'win_prize'    => 'nullable',
-            'status'       => 'nullable|max:50',
-            'pname1'       => 'nullable',
-            'pname2'       => 'nullable',
-            'game_name'    => 'nullable',
-            'pay' => 'nullable',
-        ]);
-
-        $gameEntry = JoinModel::create($validated);
-
-        return response()->json([
-            'message' => 'Game entry created successfully',
-            'data' => $gameEntry
         ], 201);
     }
 }

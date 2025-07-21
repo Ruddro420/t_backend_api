@@ -41,11 +41,7 @@ Route::delete('/rooms/{id}', [GameController::class, 'destroyRoom']);
 // payment routes
 Route::get('/deposites', [GameController::class, 'getDeposit']);
 Route::post('/add/deposite', [GameController::class, 'storeDeposite']);
-Route::post('/deposites/{id}/{status}', [GameController::class, 'updateDeposite']);
-// need deposite by user id
-Route::get('/deposites/user/{userId}', [GameController::class, 'getDepositByUserId']);
-// game entry routes
-Route::post('/game-entry', [GameController::class, 'storeGame']);
+Route::post('/deposites/{id}', [GameController::class, 'updateDeposite']);
 
 
 

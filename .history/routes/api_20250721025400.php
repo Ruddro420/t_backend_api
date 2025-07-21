@@ -45,7 +45,7 @@ Route::post('/deposites/{id}/{status}', [GameController::class, 'updateDeposite'
 // need deposite by user id
 Route::get('/deposites/user/{userId}', [GameController::class, 'getDepositByUserId']);
 // game entry routes
-Route::post('/game-entry', [GameController::class, 'storeGame']);
+Route::post('/game-entry', [GameController::class, 'store']);
 
 
 
