@@ -46,6 +46,19 @@ Route::post('/deposites/{id}/{status}', [GameController::class, 'updateDeposite'
 Route::get('/deposites/user/{userId}', [GameController::class, 'getDepositByUserId']);
 // game entry routes
 Route::post('/game-entry', [GameController::class, 'storeGame']);
+// check if user already has a game entry
+Route::get('/game-entry/check/{userId}', [GameController::class, 'checkGameEntry']);
+// check how many games a user has joined
+Route::get('/game-entry/count/{matchID}', [GameController::class, 'countGameEntries']);
+// check join match using user id
+Route::get('/game-entry/user/{userId}', [GameController::class, 'getJoinByUserId']);
+// sum pay amount by user id
+Route::get('/game-entry/sum-pay/{userId}', [GameController::class, 'sumPayByUserId']);
+// settings routes
+Route::get('/settings', [GameController::class, 'getSettings']);
+Route::post('/add/settings', [GameController::class, 'storeSettings']);
+Route::post('/settings/{id}', [GameController::class, 'updateSettings']); // or PUT if using Axios
+Route::delete('/settings/{id}', [GameController::class, 'destroySettings']);
 
 
 

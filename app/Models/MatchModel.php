@@ -31,11 +31,16 @@ class MatchModel extends Model
     ];
     public function rooms()
     {
-        return $this->hasMany(RoomModel::class);
+        return $this->hasMany(RoomModel::class, 'match_id');
     }
     // match belongs to category
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+    // match has many join models
+    public function joins()
+    {
+        return $this->hasMany(JoinModel::class, 'match_id');
     }
 }

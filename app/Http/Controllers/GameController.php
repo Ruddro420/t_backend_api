@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JoinModel;
+use App\Models\Settings;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Deposite;
@@ -129,13 +130,14 @@ class GameController extends Controller
     // Get all matches
     public function getMatches()
     {
-        $matches = MatchModel::with('category')->get();
+        $matches = MatchModel::with('category', 'joins', 'rooms')->get();
+
         return response()->json($matches);
     }
     // get match by id
     public function getMatchById($id)
     {
-        $match = MatchModel::with('category')->findOrFail($id);
+        $match = MatchModel::with('category', 'joins', 'rooms')->findOrFail($id);
         return response()->json($match);
     }
     // Update match
@@ -306,6 +308,88 @@ class GameController extends Controller
         return response()->json([
             'message' => 'Game entry created successfully',
             'data' => $gameEntry
+        ], 201);
+    }
+    // need game entry by user id
+    public function checkGameEntry($userId)
+    {
+        $gameEntry = JoinModel::where('user_id', $userId)->get();
+        if (!$gameEntry) {
+            return response()->json(['message' => 'No game entry found for this user'], 404);
+        }
+        return response()->json([
+            'message' => 'Game entry found',
+            'data' => $gameEntry
+        ], 200);
+    }
+    // count how many games a user has joined
+    public function countGameEntries($matchID)
+    {
+        $count = JoinModel::where('match_id', $matchID)->count();
+        return response()->json([
+            // 'match_id' => $matchID,
+            'game_count' => $count
+        ]);
+    }
+    // get join match using user id
+    public function getJoinByUserId($userId)
+    {
+        $joins = JoinModel::where('user_id', $userId)->get();
+        if ($joins->isEmpty()) {
+            return response()->json(['message' => 'No join matches found for this user'], 404);
+        }
+        return response()->json([
+            'user_id' => $userId,
+            'joins' => $joins
+        ]);
+    }
+    // sum pay amount by user id
+    public function sumPayByUserId($userId)
+    {
+        $sumPay = JoinModel::where('user_id', $userId)->sum('pay');
+        return response()->json([
+            'user_id' => $userId,
+            'total_pay' => $sumPay
+        ]);
+    }
+    // store settings
+    public function storeSettings(Request $request)
+    {
+        $request->validate([
+            'app_name' => 'required|string|max:255',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_1' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_2' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_3' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_4' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'notice' => 'nullable|string',
+        ]);
+
+        // File upload helper
+        $uploadFile = function ($fileInput) use ($request) {
+            if ($request->hasFile($fileInput)) {
+                $file = $request->file($fileInput);
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/app'), $filename);
+                return 'uploads/app/' . $filename;
+            }
+            return null;
+        };
+
+        // Store data
+        $settings = Settings::create([
+            'app_name'   => $request->app_name,
+            'app_logo'   => $uploadFile('app_logo'),
+            'banner_1'   => $uploadFile('banner_1'),
+            'banner_2'   => $uploadFile('banner_2'),
+            'banner_3'   => $uploadFile('banner_3'),
+            'banner_4'   => $uploadFile('banner_4'),
+            'notice'     => $request->notice,
+        ]);
+
+        return response()->json([
+            'message' => 'App settings saved successfully.',
+            'data'    => $settings
         ], 201);
     }
 }

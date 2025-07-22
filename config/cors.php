@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-     'allowed_origins' => ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.1.9:8000','http://192.168.1.7:5173','https://game420.netlify.app','https://game.aliruddro.site','http://192.168.1.3:5173'],
+     'allowed_origins' => ['http://localhost:5173', 'http://localhost:5174', 'http://192.168.1.9:8000','http://192.168.1.7:5173','https://game420.netlify.app','https://game.aliruddro.site','http://192.168.1.4:5173'],
 
     'allowed_origins_patterns' => [],
 

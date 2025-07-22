@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('match_models', function (Blueprint $table) {
             $table->id();
-            $table->string('match_id')->nullable();
+            $table->unsignedBigInteger('match_id')->nullable();
             $table->string('match_name')->nullable();
             $table->unsignedBigInteger('category_id')->nullable(); // Foreign key
             $table->string('max_player')->nullable();
@@ -38,6 +38,10 @@ return new class extends Migration
             $table->foreign('category_id')
                 ->references('id')
                 ->on('categories')
+                ->onDelete('set null'); // or use 'cascade' depending on logic
+            $table->foreign('match_id')
+                ->references('match_id')
+                ->on('join_models')
                 ->onDelete('set null'); // or use 'cascade' depending on logic
         });
     }

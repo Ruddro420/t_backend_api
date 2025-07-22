@@ -1,0 +1,395 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\JoinModel;
+use App\Models\Settings;
+use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Deposite;
+use App\Models\MatchModel;
+use App\Models\RoomModel;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+
+class GameController extends Controller
+{
+
+    // Show all categories
+    public function getCategory()
+    {
+        return response()->json(Category::all());
+    }
+    // Store new category
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'category_name' => 'required|string|max:255',
+            'category_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'rules' => 'required|string'
+        ]);
+
+        if ($request->hasFile('category_image')) {
+            $file = $request->file('category_image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('categories'), $filename);
+            $imagePath = 'categories/' . $filename;
+        }
+
+
+        $category = Category::create([
+            'name' => $request->category_name,
+            'image' => $imagePath,
+            'rules' => $request->rules,
+        ]);
+
+        return response()->json($category, 201);
+    }
+    // Update category
+    public function updateCategory(Request $request, $id)
+    {
+        $category = Category::findOrFail($id);
+
+        $request->validate([
+            'category_name' => 'required|string|max:255',
+            'category_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'rules' => 'nullable|string'
+        ]);
+
+        $category->name = $request->category_name;
+        $category->rules = $request->rules;
+
+        if ($request->hasFile('category_image')) {
+            // Optionally delete old image
+            if ($category->image && file_exists(public_path($category->image))) {
+                unlink(public_path($category->image));
+            }
+
+            $file = $request->file('category_image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('categories'), $filename);
+            $imagePath = 'categories/' . $filename;
+            // Save new image path
+            $category->image = $imagePath;
+        }
+
+        $category->save();
+
+        return response()->json($category);
+    }
+
+    // Delete category
+    public function destroyCategory($id)
+    {
+        $category = Category::findOrFail($id);
+
+        if ($category->image) {
+            Storage::disk('public')->delete($category->image);
+        }
+
+        $category->delete();
+
+        return response()->json(['message' => 'Category deleted successfully']);
+    }
+    // match store
+    public function storeMatch(Request $request)
+    {
+        do {
+            $matchId = rand(100, 999); // Generates 3-digit number between 100–999
+        } while (MatchModel::where('match_id', $matchId)->exists());
+
+        $validated = $request->validate([
+            'match_name'     => 'required|string|max:255',
+            'category_id'    => 'required|string',
+            'max_player'     => 'required|integer',
+            'map_name'       => 'required|string',
+            'version'        => 'required|string',
+            'game_type'      => 'nullable|string',
+            'game_mood'      => 'nullable|string',
+            'time'           => 'required',
+            'date'           => 'required|date',
+            'win_price'      => 'required|numeric',
+            'kill_price'     => 'required|numeric',
+            'entry_fee'      => 'required|numeric',
+            'second_prize'   => 'nullable|numeric',
+            'third_prize'    => 'nullable|numeric',
+            'fourth_prize'   => 'nullable|numeric',
+            'fifth_prize'    => 'nullable|numeric',
+            'total_prize'    => 'required|numeric',
+        ]);
+        $validated['match_id'] = $matchId;
+
+        $match = MatchModel::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match created successfully',
+            'data'    => $match,
+        ]);
+    }
+    // Get all matches
+    public function getMatches()
+    {
+        $matches = MatchModel::with('category', 'joins', 'rooms')->get();
+
+        return response()->json($matches);
+    }
+    // get match by id
+    public function getMatchById($id)
+    {
+        $match = MatchModel::with('category', 'joins', 'rooms')->findOrFail($id);
+        return response()->json($match);
+    }
+    // Update match
+    public function updateMatch(Request $request, $id)
+    {
+        $match = MatchModel::findOrFail($id);
+        $validated = $request->validate([
+            'match_name'     => 'required|string|max:255',
+            'category_id'    => 'required',
+            'max_player'     => 'required|integer',
+            'map_name'       => 'required|string',
+            'version'        => 'required|string',
+            'game_type'      => 'nullable|string',
+            'game_mood'      => 'nullable|string',
+            'time'           => 'required',
+            'date'           => 'required|date',
+            'win_price'      => 'required|numeric',
+            'kill_price'     => 'required|numeric',
+            'entry_fee'      => 'required|numeric',
+            'second_prize'   => 'nullable|numeric',
+            'third_prize'    => 'nullable|numeric',
+            'fourth_prize'   => 'nullable|numeric',
+            'fifth_prize'    => 'nullable|numeric',
+            'total_prize'    => 'required|numeric',
+        ]);
+        $match->update($validated);
+        return response()->json([
+            'success' => true,
+            'message' => 'Match updated successfully',
+            'data'    => $match,
+        ]);
+    }
+    // Delete match
+    public function destroyMatch($id)
+    {
+        $match = MatchModel::findOrFail($id);
+        $match->delete();
+        return response()->json(['message' => 'Match deleted successfully']);
+    }
+    // Get all rooms
+    public function getRooms()
+    {
+        $rooms = RoomModel::with('match')->get();
+        return response()->json($rooms);
+    }
+    // Store new room
+    public function storeRoom(Request $request)
+    {
+        $request->validate([
+            'match_id' => 'required|exists:match_models,id',
+            'room_id' => 'required|string',
+            'room_password' => 'required|string',
+        ]);
+
+        $room = RoomModel::create([
+            'match_id' => $request->match_id,
+            'room_id' => $request->room_id,
+            'room_password' => $request->room_password,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Room details saved successfully',
+            'data' => $room
+        ]);
+    }
+    // Update room
+    public function updateRoom(Request $request, $id)
+    {
+        $room = RoomModel::findOrFail($id);
+        $request->validate([
+            'match_id' => 'required|exists:match_models,id',
+            'room_id' => 'required|string',
+            'room_password' => 'required|string',
+        ]);
+        $room->update([
+            'match_id' => $request->match_id,
+            'room_id' => $request->room_id,
+            'room_password' => $request->room_password,
+        ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Room updated successfully',
+            'data' => $room
+        ]);
+    }
+    // Delete room
+    public function destroyRoom($id)
+    {
+        $room = RoomModel::findOrFail($id);
+        $room->delete();
+        return response()->json(['message' => 'Room deleted successfully']);
+    }
+    // store deposite
+    public function storeDeposite(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required',
+            'payment_method' => 'required|string|max:255',
+            'payment_phone_number' => 'required|string|max:20',
+            'transaction_id' => 'required|string|max:255|unique:deposites,transaction_id',
+            'amount' => 'required|string|min:0',
+        ]);
+
+        $payment = Deposite::create($request->all());
+
+        return response()->json([
+            'message' => 'Payment recorded successfully',
+            'payment' => $payment,
+        ], 201);
+    }
+    // get all deposites
+    public function getDeposit()
+    {
+        $deposits = Deposite::all();
+        return response()->json($deposits);
+    }
+    // update deposite
+    public function updateDeposite(Request $request, $id, $status)
+    {
+        $deposite = Deposite::findOrFail($id);
+
+        // $request->validate([
+        //     'status' => 'required|max:50',
+        // ]);
+
+        $deposite->status = $status;
+        $deposite->save();
+
+        return response()->json([
+            'message' => 'Deposite updated successfully',
+            'deposite' => $deposite,
+        ]);
+    }
+    // need deposite amount sum by same user_id where status is 1
+    public function getDepositByUserId($userId)
+    {
+        $deposits = Deposite::where('user_id', $userId)->where('status', 1)->get();
+        $totalAmount = $deposits->sum('amount');
+
+        return response()->json([
+            'user_id' => $userId,
+            'total_deposit' => $totalAmount,
+            'deposits' => $deposits
+        ]);
+    }
+    // add game join store
+
+    public function storeGame(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id'      => 'required',
+            'match_id'     => 'required|max:10',
+            'game_type'    => 'required',
+            'entry_fee'    => 'nullable',
+            'game_date'    => 'nullable',
+            'game_time'    => 'nullable',
+            'win_prize'    => 'nullable',
+            'status'       => 'nullable|max:50',
+            'pname1'       => 'nullable',
+            'pname2'       => 'nullable',
+            'game_name'    => 'nullable',
+            'pay' => 'nullable',
+        ]);
+
+        $gameEntry = JoinModel::create($validated);
+
+        return response()->json([
+            'message' => 'Game entry created successfully',
+            'data' => $gameEntry
+        ], 201);
+    }
+    // need game entry by user id
+    public function checkGameEntry($userId)
+    {
+        $gameEntry = JoinModel::where('user_id', $userId)->get();
+        if (!$gameEntry) {
+            return response()->json(['message' => 'No game entry found for this user'], 404);
+        }
+        return response()->json([
+            'message' => 'Game entry found',
+            'data' => $gameEntry
+        ], 200);
+    }
+    // count how many games a user has joined
+    public function countGameEntries($matchID)
+    {
+        $count = JoinModel::where('match_id', $matchID)->count();
+        return response()->json([
+            // 'match_id' => $matchID,
+            'game_count' => $count
+        ]);
+    }
+    // get join match using user id
+    public function getJoinByUserId($userId)
+    {
+        $joins = JoinModel::where('user_id', $userId)->get();
+        if ($joins->isEmpty()) {
+            return response()->json(['message' => 'No join matches found for this user'], 404);
+        }
+        return response()->json([
+            'user_id' => $userId,
+            'joins' => $joins
+        ]);
+    }
+    // sum pay amount by user id
+    public function sumPayByUserId($userId)
+    {
+        $sumPay = JoinModel::where('user_id', $userId)->sum('pay');
+        return response()->json([
+            'user_id' => $userId,
+            'total_pay' => $sumPay
+        ]);
+    }
+    // store settings
+    public function storeSettings(Request $request)
+    {
+        $request->validate([
+            'app_name' => 'required|string|max:255',
+            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_1' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_2' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_3' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'banner_4' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'notice' => 'nullable|string',
+        ]);
+
+        // File upload helper
+        $uploadFile = function ($fileInput) use ($request) {
+            if ($request->hasFile($fileInput)) {
+                $file = $request->file($fileInput);
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/app'), $filename);
+                return 'uploads/app/' . $filename;
+            }
+            return null;
+        };
+
+        // Store data
+        $settings = Settings::create([
+            'app_name'   => $request->app_name,
+            'app_logo'   => $uploadFile('app_logo'),
+            'banner_1'   => $uploadFile('banner_1'),
+            'banner_2'   => $uploadFile('banner_2'),
+            'banner_3'   => $uploadFile('banner_3'),
+            'banner_4'   => $uploadFile('banner_4'),
+            'notice'     => $request->notice,
+        ]);
+
+        return response()->json([
+            'message' => 'App settings saved successfully.',
+            'data'    => $settings
+        ], 201);
+    }
+}
